@@ -127,7 +127,7 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
             // Product info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.only(left: 12, right: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -191,49 +191,52 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
                     const SizedBox(height: 8),
 
                     // Price and add button
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text.rich(
-                          widget.price.toNairaTextSpan(
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: theme.colorScheme.primary,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text.rich(
+                            widget.price.toNairaTextSpan(
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                           ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: IconButton(
-                            onPressed: _isAdding
-                                ? null
-                                : () => _handleAddToCart(context),
-                            icon: _isAdding
-                                ? SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        theme.colorScheme.onPrimary,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: IconButton(
+                              onPressed: _isAdding
+                                  ? null
+                                  : () => _handleAddToCart(context),
+                              icon: _isAdding
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              theme.colorScheme.onPrimary,
+                                            ),
                                       ),
+                                    )
+                                  : AppIcons.cart(
+                                      color: theme.colorScheme.onPrimary,
+                                      size: 18,
                                     ),
-                                  )
-                                : AppIcons.cart(
-                                    color: theme.colorScheme.onPrimary,
-                                    size: 18,
-                                  ),
-                            iconSize: 18,
-                            padding: const EdgeInsets.all(8),
-                            constraints: const BoxConstraints(),
-                            tooltip: context.l10n.homeAddToCart,
+                              iconSize: 18,
+                              constraints: const BoxConstraints(),
+                              tooltip: context.l10n.homeAddToCart,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
