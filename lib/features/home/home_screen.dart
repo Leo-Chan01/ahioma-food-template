@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ahioma_food_template/core/error/error_handler.dart';
+import 'package:ahioma_food_template/features/home/data/mock_food_data.dart';
 import 'package:ahioma_food_template/features/storefront/data/data_sources/remote/storefront_remote_data_source.dart';
 import 'package:ahioma_food_template/l10n/l10n.dart';
 import 'package:ahioma_food_template/features/authentication/presentation/provider/account_setup_provider.dart';
@@ -16,9 +16,10 @@ import 'package:ahioma_food_template/features/home/presentation/screens/most_pop
 import 'package:ahioma_food_template/features/home/presentation/screens/special_offers_screen.dart';
 import 'package:ahioma_food_template/features/home/presentation/screens/wishlist_screen.dart';
 import 'package:ahioma_food_template/features/home/widgets/category_grid.dart';
+import 'package:ahioma_food_template/features/home/widgets/discount_product_card.dart';
 import 'package:ahioma_food_template/features/home/widgets/filter_chips.dart';
 import 'package:ahioma_food_template/features/home/widgets/home_header.dart';
-import 'package:ahioma_food_template/features/home/widgets/product_card.dart';
+import 'package:ahioma_food_template/features/home/widgets/recommended_product_card.dart';
 import 'package:ahioma_food_template/features/home/widgets/search_bar_widget.dart';
 import 'package:ahioma_food_template/features/home/widgets/special_offers_banner.dart';
 import 'package:ahioma_food_template/features/products/presentation/screens/product_detail_screen.dart';
@@ -47,7 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<CategoryModel> _categories = [];
-  List<StorefrontProductModel> _products = [];
+  List<StorefrontProductModel> _discountProducts = []; // First 4 products
+  List<StorefrontProductModel> _recommendedProducts = []; // Remaining products
   List<StorefrontProductModel> _featuredProducts = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
@@ -60,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static const int _itemsPerPage = 20;
   bool _hasMore = true;
   String? _currentCategorySlug; // Track current category filter for pagination
+  bool _isLoadingTriggered = false; // Prevent multiple simultaneous loads
 
   // Save reference to AuthProvider to safely remove listener in dispose
   AuthProvider? _authProvider;
@@ -180,15 +183,16 @@ class _HomeScreenState extends State<HomeScreen> {
     // Only load more if we have a valid scroll position
     if (!_scrollController.hasClients) return;
 
+    // Prevent loading if already triggered or currently loading
+    if (_isLoadingTriggered || _isLoadingMore || !_hasMore) return;
+
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
 
     // Load more when scrolled 80% of the way down
     // Add a threshold to handle edge cases where maxScrollExtent might be 0
-    if (maxScroll > 0 &&
-        currentScroll >= (maxScroll * 0.8) &&
-        !_isLoadingMore &&
-        _hasMore) {
+    if (maxScroll > 0 && currentScroll >= (maxScroll * 0.8)) {
+      _isLoadingTriggered = true;
       unawaited(_loadMoreProducts());
     }
   }
@@ -201,32 +205,60 @@ class _HomeScreenState extends State<HomeScreen> {
       if (reset) {
         _currentPage = 1;
         _hasMore = true;
-        _products = [];
+        _discountProducts = [];
+        _recommendedProducts = [];
         _currentCategorySlug = null;
         _selectedFilter = _allFilterLabel;
       }
     });
 
     try {
-      // Load categories and products in parallel
-      final results = await Future.wait([
-        _storefrontDataSource.getCategories(),
-        _storefrontDataSource.getProducts(page: _currentPage),
-        _storefrontDataSource.getFeaturedProducts(limit: 1),
-      ]);
+      // Check if we should use mock data
+      if (MockFoodData.useMockData) {
+        // Use mock data
+        await Future.delayed(
+          const Duration(milliseconds: 500),
+        ); // Simulate API delay
+        if (!mounted) return;
 
-      if (!mounted) return;
+        setState(() {
+          _categories = []; // Categories loaded separately
+          _discountProducts = MockFoodData.getDiscountProducts();
+          _recommendedProducts = MockFoodData.getRecommendedProducts();
+          _featuredProducts = MockFoodData.getDiscountProducts()
+              .take(1)
+              .toList();
+          _isLoading = false;
+          _hasMore = false; // Mock data doesn't paginate
+        });
+      } else {
+        // Load categories and products in parallel from API
+        final results = await Future.wait([
+          _storefrontDataSource.getCategories(),
+          _storefrontDataSource.getProducts(page: _currentPage),
+          _storefrontDataSource.getFeaturedProducts(limit: 1),
+        ]);
 
-      final newProducts = results[1] as List<StorefrontProductModel>;
+        if (!mounted) return;
 
-      setState(() {
-        _categories = results[0] as List<CategoryModel>;
-        _products = newProducts;
-        _featuredProducts = results[2] as List<StorefrontProductModel>;
-        _isLoading = false;
-        // If we got fewer items than requested, there are no more
-        _hasMore = newProducts.length >= _itemsPerPage;
-      });
+        final newProducts = results[1] as List<StorefrontProductModel>;
+
+        setState(() {
+          _categories = results[0] as List<CategoryModel>;
+          // Split products: first 4 for discount section, rest for recommended
+          if (newProducts.length > 4) {
+            _discountProducts = newProducts.sublist(0, 4);
+            _recommendedProducts = newProducts.sublist(4);
+          } else {
+            _discountProducts = newProducts;
+            _recommendedProducts = [];
+          }
+          _featuredProducts = results[2] as List<StorefrontProductModel>;
+          _isLoading = false;
+          // If we got fewer items than requested, there are no more
+          _hasMore = newProducts.length >= _itemsPerPage;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       final failure = ErrorHandler.handleException(e);
@@ -242,7 +274,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadMoreProducts() async {
-    if (!mounted || _isLoadingMore || !_hasMore) return;
+    if (!mounted || _isLoadingMore || !_hasMore) {
+      _isLoadingTriggered = false;
+      return;
+    }
 
     setState(() {
       _isLoadingMore = true;
@@ -258,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
 
       setState(() {
-        _products.addAll(newProducts);
+        _recommendedProducts.addAll(newProducts);
         _currentPage = nextPage;
         // If we got fewer items than requested, there are no more
         _hasMore = newProducts.length >= _itemsPerPage;
@@ -272,6 +307,12 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isLoadingMore = false;
       });
+    } finally {
+      // Reset the trigger flag after a short delay to prevent immediate retriggering
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        _isLoadingTriggered = false;
+      }
     }
   }
 
@@ -370,8 +411,13 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
+          notificationPredicate: (notification) {
+            // Only allow pull-to-refresh when at the top
+            return notification.depth == 0;
+          },
           child: CustomScrollView(
             controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: HomeHeader(
@@ -489,30 +535,28 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // Discount Products Grid (first section of products)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: _products.isEmpty
-                    ? const SliverToBoxAdapter(child: SizedBox())
-                    : SliverMasonryGrid.count(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        itemBuilder: (context, index) {
-                          if (index >= 4) return const SizedBox();
-                          final product = _products[index];
-                          final imageUrl = product.images.isNotEmpty
-                              ? product.images.first
-                              : 'https://via.placeholder.com/400';
+              // Discount Products - Horizontal Scroll
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 280,
+                  child: _discountProducts.isEmpty
+                      ? const SizedBox()
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _discountProducts.length,
+                          itemBuilder: (context, index) {
+                            final product = _discountProducts[index];
+                            final imageUrl = product.images.isNotEmpty
+                                ? product.images.first
+                                : 'https://via.placeholder.com/400';
 
-                          return AnimatedListItem(
-                            index: index,
-                            slideOffset: const Offset(0, 0.3),
-                            child: ProductCard(
+                            return DiscountProductCard(
                               productId: product.id,
                               imageUrl: imageUrl,
                               name: product.name,
                               price: product.price,
+                              originalPrice: product.price * 1.3,
                               rating: product.rating ?? 0.0,
                               soldCount: product.soldCount,
                               onTap: () {
@@ -539,11 +583,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 );
                               },
-                            ),
-                          );
-                        },
-                        childCount: _products.length > 4 ? 4 : _products.length,
-                      ),
+                            );
+                          },
+                        ),
+                ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -593,7 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Recommended products list - start from 5th product onwards
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: _products.length <= 4
+                sliver: _recommendedProducts.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.all(32),
@@ -605,60 +648,54 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       )
-                    : SliverMasonryGrid.count(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        itemBuilder: (context, index) {
-                          final productIndex = index + 4;
-                          if (productIndex >= _products.length) {
-                            return const SizedBox();
-                          }
-                          final product = _products[productIndex];
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final product = _recommendedProducts[index];
                           final imageUrl = product.images.isNotEmpty
                               ? product.images.first
                               : 'https://via.placeholder.com/400';
 
                           return AnimatedListItem(
-                            index: productIndex,
+                            index: index,
                             slideOffset: const Offset(0, 0.3),
-                            child: ProductCard(
-                              productId: product.id,
-                              imageUrl: imageUrl,
-                              name: product.name,
-                              price: product.price,
-                              rating: product.rating ?? 0.0,
-                              soldCount: product.soldCount,
-                              onTap: () {
-                                unawaited(
-                                  context.push(
-                                    ProductDetailScreen.getRoutePath(
-                                      product.slug,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: RecommendedProductCard(
+                                productId: product.id,
+                                imageUrl: imageUrl,
+                                name: product.name,
+                                price: product.price,
+                                rating: product.rating ?? 0.0,
+                                reviewCount: product.reviewCount,
+                                distance: '${(index + 1) * 0.5} km',
+                                onTap: () {
+                                  unawaited(
+                                    context.push(
+                                      ProductDetailScreen.getRoutePath(
+                                        product.slug,
+                                      ),
+                                      extra: ProductDetailData(
+                                        id: product.id,
+                                        name: product.name,
+                                        price: product.price,
+                                        rating: product.rating ?? 0.0,
+                                        reviewCount: product.reviewCount,
+                                        soldCount: product.soldCount,
+                                        images: product.images.isNotEmpty
+                                            ? product.images
+                                            : [imageUrl],
+                                        description: product.description ?? '',
+                                        category:
+                                            product.category ??
+                                            product.categoryId,
+                                      ),
                                     ),
-                                    extra: ProductDetailData(
-                                      id: product.id,
-                                      name: product.name,
-                                      price: product.price,
-                                      rating: product.rating ?? 0.0,
-                                      reviewCount: product.reviewCount,
-                                      soldCount: product.soldCount,
-                                      images: product.images.isNotEmpty
-                                          ? product.images
-                                          : [imageUrl],
-                                      description: product.description ?? '',
-                                      category:
-                                          product.category ??
-                                          product.categoryId,
-                                    ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
                           );
-                        },
-                        childCount: _products.length > 4
-                            ? _products.length - 4
-                            : 0,
+                        }, childCount: _recommendedProducts.length),
                       ),
               ),
 
@@ -685,7 +722,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              if (!_hasMore && _products.isNotEmpty)
+              if (!_hasMore &&
+                  (_discountProducts.isNotEmpty ||
+                      _recommendedProducts.isNotEmpty))
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -729,7 +768,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasMore = true;
         _isLoadingMore = false;
         _currentCategorySlug = categorySlug;
-        _products = []; // Clear existing products
+        _discountProducts = []; // Clear existing products
+        _recommendedProducts = [];
       });
 
       final products = await _storefrontDataSource.getProducts(
@@ -738,7 +778,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
       setState(() {
-        _products = products;
+        // Split products: first 4 for discount section, rest for recommended
+        if (products.length > 4) {
+          _discountProducts = products.sublist(0, 4);
+          _recommendedProducts = products.sublist(4);
+        } else {
+          _discountProducts = products;
+          _recommendedProducts = [];
+        }
         _hasMore = products.length >= _itemsPerPage;
       });
     } catch (e) {
