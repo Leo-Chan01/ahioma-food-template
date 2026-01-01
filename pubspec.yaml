@@ -8,21 +8,115 @@ environment:
   flutter: ^3.35.0
 
 dependencies:
-  bloc: ^9.0.1
   flutter:
     sdk: flutter
-  flutter_bloc: ^9.1.1
+
+  cupertino_icons: ^1.0.8
+  flutter_dotenv: ^6.0.0
+  flutter_local_notifications: ^19.5.0
   flutter_localizations:
     sdk: flutter
+  flutter_screenutil: ^5.9.3
+  get_it: ^9.2.0
+  go_router: ^17.0.0
+  hugeicons: ^1.1.2
+  url_launcher: ^6.3.2
+  retrofit: ^4.9.1
+  logger: ^2.6.2
+  provider: ^6.1.5+1
+  package_info_plus: ^9.0.0
+  json_annotation: ^4.9.0
   intl: ^0.20.2
+  intl_phone_field: ^3.2.0
+  permission_handler: ^12.0.1
+  connectivity_plus: ^7.0.0
+  share_plus: ^12.0.1
+  flutter_svg: ^2.2.3
+  dartz: ^0.10.1
+  dev: ^1.0.0
+  dio: ^5.9.0
+  equatable: ^2.0.7
+  firebase_core: ^4.2.1
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^7.0.1
+  shared_preferences: ^2.5.3
+  cached_network_image: ^3.4.1
+  flutter_staggered_grid_view: ^0.7.0
+  # pay_with_paystack: ^1.0.14
+  flutter_native_splash: ^2.4.7
+  flutter_paystack_max: ^1.0.6
 
 dev_dependencies:
-  bloc_test: ^10.0.0
   flutter_test:
     sdk: flutter
-  mocktail: ^1.0.4
-  very_good_analysis: ^10.0.0
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  json_serializable: ^6.11.3
+  build_runner: ^2.10.4
+  retrofit_generator: ^10.2.0
+  change_app_package_name: ^1.5.0
+  flutter_flavorizr: ^2.4.1
+
+dependency_overrides:
+  analyzer: 8.4.0
 
 flutter:
   generate: true
   uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/svgs/
+    - assets/fonts/
+    - .env
+    # - .env.dev
+    # - .env.prod
+
+  fonts:
+    - family: Urbanist
+      fonts:
+        - asset: assets/fonts/Urbanist/Urbanist-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Urbanist/Urbanist-ThinItalic.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Urbanist/Urbanist-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Urbanist/Urbanist-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Urbanist/Urbanist-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Urbanist/Urbanist-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Urbanist/Urbanist-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Urbanist/Urbanist-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Urbanist/Urbanist-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/Urbanist/Urbanist-Black.ttf
+          weight: 900
+        - asset: assets/fonts/Urbanist/Urbanist-BlackItalic.ttf
+          weight: 900
+          style: italic

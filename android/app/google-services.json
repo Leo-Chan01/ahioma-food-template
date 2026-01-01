@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "482089651341",
+    "project_id": "ahioma-multi-tenant-ecommerce",
+    "storage_bucket": "ahioma-multi-tenant-ecommerce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:482089651341:android:81eff4f5037dfdd2df66c4",
+        "android_client_info": {
+          "package_name": "com.ahioma.ahioma_food"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRpG3xmzPYxkG2S21yeT6bCqB2Rrcdn-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:482089651341:android:ae8c91f8a0f8ba1ddf66c4",
+        "android_client_info": {
+          "package_name": "com.ahioma.xyzcomputers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRpG3xmzPYxkG2S21yeT6bCqB2Rrcdn-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:482089651341:android:bea81db048d0b01bdf66c4",
+        "android_client_info": {
+          "package_name": "com.exwhyzee.xyzcomputers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRpG3xmzPYxkG2S21yeT6bCqB2Rrcdn-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

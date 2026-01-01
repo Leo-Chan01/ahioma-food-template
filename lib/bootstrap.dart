@@ -1,33 +1,19 @@
 import 'dart:async';
-import 'dart:developer';
 
-import 'package:bloc/bloc.dart';
+import 'package:ahioma_food_template/features/storefront/data/data_sources/remote/tenant_remote_data_source.dart';
+import 'package:ahioma_food_template/injection_container.dart';
 import 'package:flutter/widgets.dart';
-
-class AppBlocObserver extends BlocObserver {
-  const AppBlocObserver();
-
-  @override
-  void onChange(BlocBase<dynamic> bloc, Change<dynamic> change) {
-    super.onChange(bloc, change);
-    log('onChange(${bloc.runtimeType}, $change)');
-  }
-
-  @override
-  void onError(BlocBase<dynamic> bloc, Object error, StackTrace stackTrace) {
-    log('onError(${bloc.runtimeType}, $error, $stackTrace)');
-    super.onError(bloc, error, stackTrace);
-  }
-}
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
-  FlutterError.onError = (details) {
-    log(details.exceptionAsString(), stackTrace: details.stack);
-  };
+  // Load environment variables
+  await dotenv.load();
 
-  Bloc.observer = const AppBlocObserver();
+  // Initialize dependencies
+  await initializeAppDependencies();
 
-  // Add cross-flavor configuration here
+  // Initialize tenant configuration (fetch business profile)
+  await sl<TenantRemoteDataSource>().initialize();
 
   runApp(await builder());
 }
