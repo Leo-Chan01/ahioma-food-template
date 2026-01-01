@@ -6,8 +6,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ahioma_food_template/core/error/error_handler.dart';
 import 'package:ahioma_food_template/features/storefront/data/data_sources/remote/storefront_remote_data_source.dart';
-import 'package:ahioma_food_template/core/utils/strings/most_popular_strings.dart';
-import 'package:ahioma_food_template/core/utils/strings/special_offers_strings.dart';
+import 'package:ahioma_food_template/l10n/l10n.dart';
 import 'package:ahioma_food_template/features/authentication/presentation/provider/account_setup_provider.dart';
 import 'package:ahioma_food_template/features/authentication/presentation/provider/auth_provider.dart';
 import 'package:ahioma_food_template/features/cart/presentation/provider/cart_provider.dart';
@@ -53,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String? _errorMessage;
+  String _allFilterLabel = 'All';
   String _selectedFilter = 'All';
 
   // Pagination state
@@ -75,6 +75,20 @@ class _HomeScreenState extends State<HomeScreen> {
       _setupWishlistListener();
       _loadCartIfAuthenticated();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final localizedAll = context.l10n.homeFilterAll;
+    if (_allFilterLabel != localizedAll) {
+      setState(() {
+        if (_selectedFilter == _allFilterLabel || _selectedFilter.isEmpty) {
+          _selectedFilter = localizedAll;
+        }
+        _allFilterLabel = localizedAll;
+      });
+    }
   }
 
   /// Load cart items (works for both guest and authenticated users)
@@ -189,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasMore = true;
         _products = [];
         _currentCategorySlug = null;
+        _selectedFilter = _allFilterLabel;
       }
     });
 
@@ -262,45 +277,64 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: SafeArea(child: _buildBody()));
-  }
+    final theme = Theme.of(context);
 
-  Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: CircularProgressIndicator.adaptive(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error loading data',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Padding(
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    context.l10n.homeErrorLoadingTitle,
+                    style: theme.textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (_errorMessage?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadData,
+                    child: Text(context.l10n.homeRetry),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadData, child: const Text('Retry')),
-          ],
+          ),
         ),
       );
     }
@@ -332,249 +366,346 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final avatarUrl = customer?.avatarUrl;
 
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // Header
-          SliverToBoxAdapter(
-            child: HomeHeader(
-              userName: displayName,
-              avatarUrl: avatarUrl,
-              onNotificationTap: () {
-                unawaited(context.push(NotificationsScreen.path));
-              },
-              onFavoriteTap: () {
-                unawaited(context.push(WishlistScreen.path));
-              },
-            ),
-          ),
-
-          // Search Bar
-          SliverToBoxAdapter(
-            child: SearchBarWidget(
-              onTap: () {
-                unawaited(
-                  context.push(SearchScreen.getRoutePath(SearchMode.products)),
-                );
-              },
-              onFilterTap: () {
-                unawaited(
-                  context.push(
-                    SearchScreen.getRoutePath(
-                      SearchMode.products,
-                      autoOpenFilter: true,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          // Special Offers Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    SpecialOffersStrings.specialOffers,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      unawaited(context.push(SpecialOffersScreen.path));
-                    },
-                    child: const Text(MostPopularStrings.seeAll),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-          // Special Offers Banner
-          SliverToBoxAdapter(
-            child:
-                _featuredProducts.isNotEmpty &&
-                    _featuredProducts[0].images.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: SpecialOffersBanner(
-                      imageUrl: _featuredProducts[0].images.first,
-                    ),
-                  )
-                : const SizedBox(),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          // Categories Grid
-          SliverToBoxAdapter(
-            child: CategoryGrid(
-              categories: _categories,
-              onCategoryTap: (category) {
-                unawaited(
-                  context.push(CategoryProductsScreen.getRoutePath(category)),
-                );
-              },
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          // Most Popular Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    MostPopularStrings.mostPopular,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      unawaited(context.push(MostPopularScreen.path));
-                    },
-                    child: const Text(MostPopularStrings.seeAll),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-          // Filter Chips - Show category-based filters
-          if (_categories.isNotEmpty)
-            SliverToBoxAdapter(
-              child: FilterChips(
-                filters: ['All', ..._categories.take(4).map((cat) => cat.name)],
-                selectedFilter: _selectedFilter,
-                onFilterSelected: (filter) {
-                  setState(() {
-                    _selectedFilter = filter;
-                  });
-                  unawaited(_loadProductsForFilter(filter));
-                },
-              ),
-            ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-          // Products Grid
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: _products.isEmpty
-                ? SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Center(
-                        child: Text(
-                          'No products available',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    ),
-                  )
-                : SliverMasonryGrid.count(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    itemBuilder: (context, index) {
-                      final product = _products[index];
-                      final imageUrl = product.images.isNotEmpty
-                          ? product.images.first
-                          : 'https://via.placeholder.com/400';
-
-                      return AnimatedListItem(
-                        index: index,
-                        slideOffset: const Offset(0, 0.3),
-                        child: ProductCard(
-                          productId: product.id,
-                          imageUrl: imageUrl,
-                          name: product.name,
-                          price: product.price,
-                          rating: product.rating ?? 0.0,
-                          soldCount: product.soldCount,
-                          onTap: () {
-                            // Use slug for navigation (API uses slug)
-                            unawaited(
-                              context.push(
-                                ProductDetailScreen.getRoutePath(product.slug),
-                                extra: ProductDetailData(
-                                  id: product.id,
-                                  name: product.name,
-                                  price: product.price,
-                                  rating: product.rating ?? 0.0,
-                                  reviewCount: product.reviewCount,
-                                  soldCount: product.soldCount,
-                                  images: product.images.isNotEmpty
-                                      ? product.images
-                                      : [imageUrl],
-                                  description: product.description ?? '',
-                                  category:
-                                      product.category ?? product.categoryId,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    childCount: _products.length,
-                  ),
-          ),
-
-          // Loading indicator for pagination
-          if (_isLoadingMore)
-            SliverToBoxAdapter(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator.adaptive(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Loading more products...',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+    return Scaffold(
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverToBoxAdapter(
+                child: HomeHeader(
+                  userName: displayName,
+                  avatarUrl: avatarUrl,
+                  onNotificationTap: () {
+                    unawaited(context.push(NotificationsScreen.path));
+                  },
+                  onFavoriteTap: () {
+                    unawaited(context.push(WishlistScreen.path));
+                  },
                 ),
               ),
-            ),
 
-          // End of list indicator
-          if (!_hasMore && _products.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Text(
-                    'No more products to load',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
+              SliverToBoxAdapter(
+                child: SearchBarWidget(
+                  onTap: () {
+                    unawaited(
+                      context.push(
+                        SearchScreen.getRoutePath(SearchMode.products),
+                      ),
+                    );
+                  },
+                  onFilterTap: () {
+                    unawaited(
+                      context.push(
+                        SearchScreen.getRoutePath(
+                          SearchMode.products,
+                          autoOpenFilter: true,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        context.l10n.homeSpecialOffers,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          unawaited(context.push(SpecialOffersScreen.path));
+                        },
+                        child: Text(context.l10n.homeSeeAll),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+              SliverToBoxAdapter(
+                child:
+                    _featuredProducts.isNotEmpty &&
+                        _featuredProducts[0].images.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: SpecialOffersBanner(
+                          imageUrl: _featuredProducts[0].images.first,
+                          title: context.l10n.homeSpecialTitleDefault,
+                          description:
+                              context.l10n.homeSpecialDescriptionDefault,
+                        ),
+                      )
+                    : const SizedBox(),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              SliverToBoxAdapter(
+                child: CategoryGrid(
+                  categories: _categories,
+                  onCategoryTap: (category) {
+                    unawaited(
+                      context.push(
+                        CategoryProductsScreen.getRoutePath(category),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // Discount Guaranteed Section (replaces Most Popular)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${context.l10n.homeDiscountGuaranteed} 👌',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          unawaited(context.push(MostPopularScreen.path));
+                        },
+                        child: Text(context.l10n.homeSeeAll),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // Discount Products Grid (first section of products)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: _products.isEmpty
+                    ? const SliverToBoxAdapter(child: SizedBox())
+                    : SliverMasonryGrid.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        itemBuilder: (context, index) {
+                          if (index >= 4) return const SizedBox();
+                          final product = _products[index];
+                          final imageUrl = product.images.isNotEmpty
+                              ? product.images.first
+                              : 'https://via.placeholder.com/400';
+
+                          return AnimatedListItem(
+                            index: index,
+                            slideOffset: const Offset(0, 0.3),
+                            child: ProductCard(
+                              productId: product.id,
+                              imageUrl: imageUrl,
+                              name: product.name,
+                              price: product.price,
+                              rating: product.rating ?? 0.0,
+                              soldCount: product.soldCount,
+                              onTap: () {
+                                unawaited(
+                                  context.push(
+                                    ProductDetailScreen.getRoutePath(
+                                      product.slug,
+                                    ),
+                                    extra: ProductDetailData(
+                                      id: product.id,
+                                      name: product.name,
+                                      price: product.price,
+                                      rating: product.rating ?? 0.0,
+                                      reviewCount: product.reviewCount,
+                                      soldCount: product.soldCount,
+                                      images: product.images.isNotEmpty
+                                          ? product.images
+                                          : [imageUrl],
+                                      description: product.description ?? '',
+                                      category:
+                                          product.category ??
+                                          product.categoryId,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                        childCount: _products.length > 4 ? 4 : _products.length,
+                      ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // Recommended For You Section
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${context.l10n.homeRecommendedForYou} 😍',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          unawaited(context.push(MostPopularScreen.path));
+                        },
+                        child: Text(context.l10n.homeSeeAll),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+              if (_categories.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: FilterChips(
+                    filters: [
+                      _allFilterLabel,
+                      ..._categories.take(4).map((cat) => cat.name),
+                    ],
+                    selectedFilter: _selectedFilter,
+                    onFilterSelected: (filter) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                      unawaited(_loadProductsForFilter(filter));
+                    },
+                  ),
+                ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // Recommended products list - start from 5th product onwards
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: _products.length <= 4
+                    ? SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Center(
+                            child: Text(
+                              context.l10n.homeNoProductsAvailable,
+                              style: theme.textTheme.bodyLarge,
+                            ),
+                          ),
+                        ),
+                      )
+                    : SliverMasonryGrid.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        itemBuilder: (context, index) {
+                          final productIndex = index + 4;
+                          if (productIndex >= _products.length) {
+                            return const SizedBox();
+                          }
+                          final product = _products[productIndex];
+                          final imageUrl = product.images.isNotEmpty
+                              ? product.images.first
+                              : 'https://via.placeholder.com/400';
+
+                          return AnimatedListItem(
+                            index: productIndex,
+                            slideOffset: const Offset(0, 0.3),
+                            child: ProductCard(
+                              productId: product.id,
+                              imageUrl: imageUrl,
+                              name: product.name,
+                              price: product.price,
+                              rating: product.rating ?? 0.0,
+                              soldCount: product.soldCount,
+                              onTap: () {
+                                unawaited(
+                                  context.push(
+                                    ProductDetailScreen.getRoutePath(
+                                      product.slug,
+                                    ),
+                                    extra: ProductDetailData(
+                                      id: product.id,
+                                      name: product.name,
+                                      price: product.price,
+                                      rating: product.rating ?? 0.0,
+                                      reviewCount: product.reviewCount,
+                                      soldCount: product.soldCount,
+                                      images: product.images.isNotEmpty
+                                          ? product.images
+                                          : [imageUrl],
+                                      description: product.description ?? '',
+                                      category:
+                                          product.category ??
+                                          product.categoryId,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                        childCount: _products.length > 4
+                            ? _products.length - 4
+                            : 0,
+                      ),
+              ),
+
+              if (_isLoadingMore)
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator.adaptive(),
+                        const SizedBox(height: 16),
+                        Text(
+                          context.l10n.homeLoadingMore,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.8,
+                            ),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              if (!_hasMore && _products.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Text(
+                        context.l10n.homeNoMoreProducts,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -583,7 +714,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     try {
-      final categorySlug = filter == 'All'
+      final categorySlug = filter == _allFilterLabel
           ? null
           : _categories
                 .firstWhere(

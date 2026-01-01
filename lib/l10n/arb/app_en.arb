@@ -3,5 +3,113 @@
     "counterAppBarTitle": "Counter",
     "@counterAppBarTitle": {
         "description": "Text shown in the AppBar of the Counter Page"
+    },
+    "homeGreetingMorning": "Good morning",
+    "@homeGreetingMorning": {
+        "description": "Greeting shown in the home header during morning hours"
+    },
+    "homeGreetingAfternoon": "Good afternoon",
+    "@homeGreetingAfternoon": {
+        "description": "Greeting shown in the home header during afternoon hours"
+    },
+    "homeGreetingEvening": "Good evening",
+    "@homeGreetingEvening": {
+        "description": "Greeting shown in the home header during evening hours"
+    },
+    "homeGuestShopper": "Guest shopper",
+    "@homeGuestShopper": {
+        "description": "Fallback display name for users without a profile"
+    },
+    "homeErrorLoadingTitle": "Error loading data",
+    "@homeErrorLoadingTitle": {
+        "description": "Title displayed when the home screen fails to load data"
+    },
+    "homeRetry": "Retry",
+    "@homeRetry": {
+        "description": "Label for retry buttons"
+    },
+    "homeNoProductsAvailable": "No products available",
+    "@homeNoProductsAvailable": {
+        "description": "Message shown when there are no products to display"
+    },
+    "homeLoadingMore": "Loading more products...",
+    "@homeLoadingMore": {
+        "description": "Indicator text while more products are being fetched"
+    },
+    "homeNoMoreProducts": "No more products to load",
+    "@homeNoMoreProducts": {
+        "description": "Message shown when pagination reaches the end"
+    },
+    "homeSpecialOffers": "Special offers",
+    "@homeSpecialOffers": {
+        "description": "Section title for special offers"
+    },
+    "homeSeeAll": "See all",
+    "@homeSeeAll": {
+        "description": "Call to action to view more items"
+    },
+    "homeMostPopular": "Most popular",
+    "@homeMostPopular": {
+        "description": "Section title for popular products"
+    },
+    "homeFilterAll": "All",
+    "@homeFilterAll": {
+        "description": "Label for the all filter chip"
+    },
+    "homeWishlistLoginPrompt": "Please login to add items to your wishlist",
+    "@homeWishlistLoginPrompt": {
+        "description": "Message prompting users to login before adding to wishlist"
+    },
+    "homeSoldCount": "{count} sold",
+    "@homeSoldCount": {
+        "description": "Label showing how many items were sold",
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "description": "Number of items sold"
+            }
+        }
+    },
+    "homeSpecialTitleDefault": "Today's special!",
+    "@homeSpecialTitleDefault": {
+        "description": "Default headline text for the special offer banner"
+    },
+    "homeSpecialDescriptionDefault": "Get discount for every order, only valid for today",
+    "@homeSpecialDescriptionDefault": {
+        "description": "Default description text for the special offer banner"
+    },
+    "searchPlaceholder": "What are you craving?",
+    "@searchPlaceholder": {
+        "description": "Hint text for the search bar on the home screen"
+    },
+    "homeDeliverTo": "Deliver to",
+    "@homeDeliverTo": {
+        "description": "Label for delivery location in home header"
+    },
+    "homeDiscountGuaranteed": "Discount guaranteed!",
+    "@homeDiscountGuaranteed": {
+        "description": "Title for discount guaranteed section"
+    },
+    "homeRecommendedForYou": "Recommended for you",
+    "@homeRecommendedForYou": {
+        "description": "Title for recommended products section"
+    },
+    "homeAddToCart": "Add to cart",
+    "@homeAddToCart": {
+        "description": "Tooltip for add to cart button on product cards"
+    },
+    "homePromo": "PROMO",
+    "@homePromo": {
+        "description": "Label for promotional badge on products"
+    },
+    "homeDistance": "{distance} km",
+    "@homeDistance": {
+        "description": "Distance label for products",
+        "placeholders": {
+            "distance": {
+                "type": "String",
+                "description": "Distance value"
+            }
+        }
     }
 }

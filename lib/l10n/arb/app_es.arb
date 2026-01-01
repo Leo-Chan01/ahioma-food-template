@@ -3,5 +3,113 @@
     "counterAppBarTitle": "Contador",
     "@counterAppBarTitle": {
         "description": "Texto mostrado en la AppBar de la página del contador"
+    },
+    "homeGreetingMorning": "Buenos días",
+    "@homeGreetingMorning": {
+        "description": "Saludo mostrado en el encabezado de inicio durante la mañana"
+    },
+    "homeGreetingAfternoon": "Buenas tardes",
+    "@homeGreetingAfternoon": {
+        "description": "Saludo mostrado en el encabezado de inicio durante la tarde"
+    },
+    "homeGreetingEvening": "Buenas noches",
+    "@homeGreetingEvening": {
+        "description": "Saludo mostrado en el encabezado de inicio durante la noche"
+    },
+    "homeGuestShopper": "Cliente invitado",
+    "@homeGuestShopper": {
+        "description": "Nombre predeterminado para usuarios sin perfil"
+    },
+    "homeErrorLoadingTitle": "Error al cargar datos",
+    "@homeErrorLoadingTitle": {
+        "description": "Título mostrado cuando falla la carga de datos en inicio"
+    },
+    "homeRetry": "Reintentar",
+    "@homeRetry": {
+        "description": "Etiqueta para botones de reintento"
+    },
+    "homeNoProductsAvailable": "No hay productos disponibles",
+    "@homeNoProductsAvailable": {
+        "description": "Mensaje mostrado cuando no hay productos para mostrar"
+    },
+    "homeLoadingMore": "Cargando más productos...",
+    "@homeLoadingMore": {
+        "description": "Texto indicador mientras se cargan más productos"
+    },
+    "homeNoMoreProducts": "No hay más productos para cargar",
+    "@homeNoMoreProducts": {
+        "description": "Mensaje mostrado cuando se alcanza el final de la paginación"
+    },
+    "homeSpecialOffers": "Ofertas especiales",
+    "@homeSpecialOffers": {
+        "description": "Título de sección para ofertas especiales"
+    },
+    "homeSeeAll": "Ver todo",
+    "@homeSeeAll": {
+        "description": "Llamado a la acción para ver más elementos"
+    },
+    "homeMostPopular": "Más populares",
+    "@homeMostPopular": {
+        "description": "Título de sección para productos populares"
+    },
+    "homeFilterAll": "Todo",
+    "@homeFilterAll": {
+        "description": "Etiqueta para el chip de filtro de todos"
+    },
+    "homeWishlistLoginPrompt": "Inicia sesión para agregar artículos a tu lista de deseos",
+    "@homeWishlistLoginPrompt": {
+        "description": "Mensaje que solicita iniciar sesión antes de agregar a la lista de deseos"
+    },
+    "homeSoldCount": "{count} vendidos",
+    "@homeSoldCount": {
+        "description": "Etiqueta que muestra cuántos artículos se han vendido",
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "description": "Número de artículos vendidos"
+            }
+        }
+    },
+    "homeSpecialTitleDefault": "¡Especial de hoy!",
+    "@homeSpecialTitleDefault": {
+        "description": "Texto predeterminado del banner de oferta especial"
+    },
+    "homeSpecialDescriptionDefault": "Obtén descuento en cada pedido, solo válido por hoy",
+    "@homeSpecialDescriptionDefault": {
+        "description": "Descripción predeterminada del banner de oferta especial"
+    },
+    "searchPlaceholder": "¿Qué se te antoja?",
+    "@searchPlaceholder": {
+        "description": "Texto de ayuda para la barra de búsqueda en la pantalla de inicio"
+    },
+    "homeDeliverTo": "Entregar en",
+    "@homeDeliverTo": {
+        "description": "Etiqueta para la ubicación de entrega en el encabezado"
+    },
+    "homeDiscountGuaranteed": "¡Descuento garantizado!",
+    "@homeDiscountGuaranteed": {
+        "description": "Título para la sección de descuento garantizado"
+    },
+    "homeRecommendedForYou": "Recomendado para ti",
+    "@homeRecommendedForYou": {
+        "description": "Título para la sección de productos recomendados"
+    },
+    "homeAddToCart": "Agregar al carrito",
+    "@homeAddToCart": {
+        "description": "Descripción para el botón de agregar al carrito en las tarjetas de producto"
+    },
+    "homePromo": "PROMO",
+    "@homePromo": {
+        "description": "Etiqueta para insignia promocional en productos"
+    },
+    "homeDistance": "{distance} km",
+    "@homeDistance": {
+        "description": "Etiqueta de distancia para productos",
+        "placeholders": {
+            "distance": {
+                "type": "String",
+                "description": "Valor de distancia"
+            }
+        }
     }
 }

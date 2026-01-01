@@ -1,11 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:ahioma_food_template/core/utils/app_icons.dart';
 import 'package:ahioma_food_template/core/utils/price_formatter.dart';
-import 'package:ahioma_food_template/features/authentication/presentation/provider/auth_provider.dart';
-import 'package:ahioma_food_template/features/authentication/presentation/screens/login_screen.dart';
-import 'package:ahioma_food_template/features/wishlist/presentation/provider/wishlist_provider.dart';
+import 'package:ahioma_food_template/features/cart/presentation/provider/cart_provider.dart';
+import 'package:ahioma_food_template/l10n/l10n.dart';
 import 'package:ahioma_food_template/shared/global_snackbar.dart';
 import 'package:provider/provider.dart';
 
@@ -17,9 +15,8 @@ class ProductCard extends StatefulWidget {
     required this.rating,
     required this.soldCount,
     required this.productId,
-    this.isFavorite = false,
     this.onTap,
-    this.onFavoriteTap,
+    this.onAddToCart,
     super.key,
   });
 
@@ -29,58 +26,47 @@ class ProductCard extends StatefulWidget {
   final double rating;
   final int soldCount;
   final String productId;
-  final bool isFavorite;
   final VoidCallback? onTap;
-  final VoidCallback? onFavoriteTap;
+  final VoidCallback? onAddToCart;
 
   @override
   State<ProductCard> createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
-  bool _isToggling = false;
+  bool _isAdding = false;
 
-  Future<void> _handleFavoriteTap(BuildContext context) async {
-    final authProvider = context.read<AuthProvider>();
-    final wishlistProvider = context.read<WishlistProvider>();
-
-    // Check if user is authenticated
-    if (!authProvider.isAuthenticated) {
-      GlobalSnackBar.showInfo('Please login to add items to your wishlist');
-      if (mounted) {
-        context.pushNamed(LoginScreen.name);
-      }
-      return;
-    }
+  Future<void> _handleAddToCart(BuildContext context) async {
+    final cartProvider = context.read<CartProvider>();
 
     setState(() {
-      _isToggling = true;
+      _isAdding = true;
     });
 
     try {
-      final isInWishlist = wishlistProvider.isInWishlist(widget.productId);
-      if (isInWishlist) {
-        await wishlistProvider.removeFromWishlist(widget.productId);
-      } else {
-        await wishlistProvider.addToWishlist(widget.productId);
+      await cartProvider.addToCart(widget.productId, quantity: 1);
+      if (mounted) {
+        GlobalSnackBar.showSuccess('Added to cart');
+      }
+    } catch (e) {
+      if (mounted) {
+        GlobalSnackBar.showError('Failed to add to cart');
       }
     } finally {
       if (mounted) {
         setState(() {
-          _isToggling = false;
+          _isAdding = false;
         });
       }
     }
 
     // Call optional callback
-    widget.onFavoriteTap?.call();
+    widget.onAddToCart?.call();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final wishlistProvider = context.watch<WishlistProvider>();
-    final isInWishlist = wishlistProvider.isInWishlist(widget.productId);
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -96,7 +82,7 @@ class _ProductCardState extends State<ProductCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Image with favorite button
+            // Image with add to cart button
             Stack(
               children: [
                 ClipRRect(
@@ -142,7 +128,7 @@ class _ProductCardState extends State<ProductCard> {
                   right: 8,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
+                      color: theme.colorScheme.primary,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -153,31 +139,28 @@ class _ProductCardState extends State<ProductCard> {
                       ],
                     ),
                     child: IconButton(
-                      onPressed: _isToggling
+                      onPressed: _isAdding
                           ? null
-                          : () => _handleFavoriteTap(context),
-                      icon: _isToggling
+                          : () => _handleAddToCart(context),
+                      icon: _isAdding
                           ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  theme.colorScheme.primary,
+                                  theme.colorScheme.onPrimary,
                                 ),
                               ),
                             )
-                          : isInWishlist
-                          ? Icon(
-                              Icons.favorite,
-                              color: theme.colorScheme.error,
-                            )
-                          : AppIcons.favorite(
-                              color: theme.colorScheme.onSurface,
+                          : AppIcons.cart(
+                              color: theme.colorScheme.onPrimary,
+                              size: 20,
                             ),
                       iconSize: 20,
                       padding: const EdgeInsets.all(8),
                       constraints: const BoxConstraints(),
+                      tooltip: context.l10n.homeAddToCart,
                     ),
                   ),
                 ),
@@ -205,11 +188,7 @@ class _ProductCardState extends State<ProductCard> {
                   // Rating and sold count
                   Row(
                     children: [
-                      const Icon(
-                        Icons.star,
-                        size: 14,
-                        color: Colors.amber,
-                      ),
+                      const Icon(Icons.star, size: 14, color: Colors.amber),
                       const SizedBox(width: 3),
                       Text(
                         widget.rating.toStringAsFixed(1),
@@ -231,7 +210,7 @@ class _ProductCardState extends State<ProductCard> {
                       const SizedBox(width: 3),
                       Flexible(
                         child: Text(
-                          '${widget.soldCount} sold',
+                          context.l10n.homeSoldCount(widget.soldCount),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.6,

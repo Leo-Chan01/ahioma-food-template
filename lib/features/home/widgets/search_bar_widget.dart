@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ahioma_food_template/core/utils/app_icons.dart';
-import 'package:ahioma_food_template/core/utils/strings/search_strings.dart';
+import 'package:ahioma_food_template/l10n/l10n.dart';
 
 class SearchBarWidget extends StatelessWidget {
-  const SearchBarWidget({
-    super.key,
-    this.onTap,
-    this.onFilterTap,
-  });
+  const SearchBarWidget({super.key, this.onTap, this.onFilterTap});
 
   final VoidCallback? onTap;
   final VoidCallback? onFilterTap;
@@ -42,7 +38,7 @@ class SearchBarWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      SearchStrings.search,
+                      context.l10n.searchPlaceholder,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.5,
